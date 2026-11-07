@@ -1,0 +1,154 @@
+
+"""
+Book Store GraphQL API.
+
+Equivalent GraphQL representation of the original
+OpenAPI 3.1 Book Store API, version 1.0.0.
+"""
+
+# --------------------------------------------------
+# Custom directives
+# --------------------------------------------------
+
+"""
+Requires a valid bearer token.
+
+The health query is intentionally public.
+The directive must be implemented by the GraphQL server.
+"""
+directive @requiresAuth on FIELD_DEFINITION
+
+
+# --------------------------------------------------
+# Enums
+# --------------------------------------------------
+
+"""
+Supported book genres.
+
+SCI_FI maps to the original REST value "sci-fi".
+"""
+enum Genre {
+    FICTION
+    NONFICTION
+    SCI_FI
+    POETRY
+}
+
+
+"""
+Health status values.
+"""
+enum HealthStatus {
+    OK
+}
+
+
+# --------------------------------------------------
+# Object types
+# --------------------------------------------------
+
+"""
+A book returned by the service.
+The ID is assigned by the server.
+"""
+type Book {
+    id: Int!
+    title: String!
+    genre: Genre
+    author: String
+}
+
+
+"""
+Paginated collection of books.
+"""
+type BookPage {
+    items: [Book!]!
+    total: Int!
+}
+
+
+"""
+Liveness probe response.
+"""
+type HealthStatusResponse {
+    status: HealthStatus!
+}
+
+
+# --------------------------------------------------
+# Input types
+# --------------------------------------------------
+
+"""
+Input accepted when creating a book.
+
+The server generates the book ID.
+"""
+input BookInput {
+    title: String!
+    genre: Genre
+    author: String
+}
+
+
+# --------------------------------------------------
+# Query root
+# --------------------------------------------------
+
+type Query {
+
+    """
+    Public liveness probe.
+    No authentication required.
+    """
+    health: HealthStatusResponse!
+
+
+    """
+    Retrieve a paginated list of books.
+
+    Genre is optional. Omitting it returns all genres.
+    Page is 1-based and defaults to 1.
+    """
+    books(
+        genre: Genre
+        page: Int! = 1
+    ): BookPage! @requiresAuth
+
+
+    """
+    Retrieve a book by its ID.
+    """
+    book(
+        id: Int!
+    ): Book! @requiresAuth
+}
+
+
+# --------------------------------------------------
+# Mutation root
+# --------------------------------------------------
+
+type Mutation {
+
+    """
+    Create a new book.
+    The server assigns its ID.
+    """
+    createBook(
+        input: BookInput!
+    ): Book! @requiresAuth
+
+
+    """
+    Delete a book by ID.
+
+    Returns true when deletion succeeds.
+    A missing book produces a NOT_FOUND GraphQL error.
+    """
+    deleteBook(
+        id: Int!
+    ): Boolean! @requiresAuth
+}

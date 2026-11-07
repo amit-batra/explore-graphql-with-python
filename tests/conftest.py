@@ -1,10 +1,16 @@
 import json
+import logging
 
 import httpx
 import pytest
 
 from explore_graphql_with_python.app import create_app
 from explore_graphql_with_python.config import Settings
+
+
+@pytest.fixture
+def log() -> logging.Logger:
+    return logging.getLogger("test")
 
 
 @pytest.fixture
